@@ -14,7 +14,46 @@ class ImageDownloaderApp:
     def __init__(self, root):
         self.root = root
         self.root.title("图片下载器")
-        self.root.geometry("600x500")
+        self.root.geometry("800x600")
+        self.root.resizable(True, True)
+
+        # 设置样式
+        self.style = ttk.Style()
+        self.style.theme_use("clam")
+        self.style.configure(
+            "TLabel", 
+            font=(".Microsoft YaHei UI", 10),
+            padding=5,
+            background="#f0f0f0"
+        )
+        self.style.configure(
+            "TButton", 
+            font=(".Microsoft YaHei UI", 10),
+            padding=8,
+            background="#e1e1e1"
+        )
+        self.style.map(
+            "TButton",
+            background=[("active", "#d0d0d0"), ("disabled", "#f5f5f5")]
+        )
+        self.style.configure(
+            "TEntry", 
+            font=(".Microsoft YaHei UI", 10),
+            padding=5
+        )
+        self.style.configure(
+            "TCombobox", 
+            font=(".Microsoft YaHei UI", 10),
+            padding=5
+        )
+
+        # 创建主框架
+        self.main_frame = ttk.Frame(root, padding="20 20 20 20", style="TFrame")
+        self.main_frame.pack(fill=tk.BOTH, expand=True)
+
+        # 输入区域框架
+        self.input_frame = ttk.LabelFrame(self.main_frame, text="下载设置", padding="10 10 10 10")
+        self.input_frame.pack(fill=tk.X, pady=(0, 15))
 
         # 全局状态
         self.is_paused = False
@@ -22,57 +61,73 @@ class ImageDownloaderApp:
         self.download_thread = None
 
         # 输入框和标签
-        tk.Label(root, text="目标 URL:").grid(row=0, column=0, padx=5, pady=5, sticky="e")
-        self.url_entry = tk.Entry(root, width=50)
-        self.url_entry.grid(row=0, column=1, padx=5, pady=5)
+        ttk.Label(self.input_frame, text="目标 URL:").grid(row=0, column=0, padx=5, pady=5, sticky="e")
+        self.url_entry = ttk.Entry(self.input_frame, width=50)
+        self.url_entry.grid(row=0, column=1, padx=5, pady=5, columnspan=2, sticky="ew")
 
-        tk.Label(root, text="选择器类型:").grid(row=1, column=0, padx=5, pady=5, sticky="e")
-        self.selector_type = ttk.Combobox(root, values=["id", "class"])
-        self.selector_type.grid(row=1, column=1, padx=5, pady=5)
+        ttk.Label(self.input_frame, text="选择器类型:").grid(row=1, column=0, padx=5, pady=5, sticky="e")
+        self.selector_type = ttk.Combobox(self.input_frame, values=["id", "class"], state="readonly")
+        self.selector_type.grid(row=1, column=1, padx=5, pady=5, sticky="w")
         self.selector_type.set("id")
 
-        tk.Label(root, text="选择器值:").grid(row=2, column=0, padx=5, pady=5, sticky="e")
-        self.selector_entry = tk.Entry(root, width=50)
-        self.selector_entry.grid(row=2, column=1, padx=5, pady=5)
+        ttk.Label(self.input_frame, text="选择器值:").grid(row=2, column=0, padx=5, pady=5, sticky="e")
+        self.selector_entry = ttk.Entry(self.input_frame, width=50)
+        self.selector_entry.grid(row=2, column=1, padx=5, pady=5, columnspan=2, sticky="ew")
 
-        tk.Label(root, text="保存目录:").grid(row=3, column=0, padx=5, pady=5, sticky="e")
-        self.save_dir_entry = tk.Entry(root, width=50)
-        self.save_dir_entry.grid(row=3, column=1, padx=5, pady=5)
-        self.browse_button = tk.Button(root, text="浏览", command=self.browse_directory)
+        ttk.Label(self.input_frame, text="保存目录:").grid(row=3, column=0, padx=5, pady=5, sticky="e")
+        self.save_dir_entry = ttk.Entry(self.input_frame, width=40)
+        self.save_dir_entry.grid(row=3, column=1, padx=5, pady=5, sticky="ew")
+        self.browse_button = ttk.Button(self.input_frame, text="浏览", command=self.browse_directory)
         self.browse_button.grid(row=3, column=2, padx=5, pady=5)
 
-        tk.Label(root, text="命名方式:").grid(row=4, column=0, padx=5, pady=5, sticky="e")
-        self.naming_option = ttk.Combobox(root, values=["original", "uuid", "timestamp", "custom"])
-        self.naming_option.grid(row=4, column=1, padx=5, pady=5)
+        ttk.Label(self.input_frame, text="命名方式:").grid(row=4, column=0, padx=5, pady=5, sticky="e")
+        self.naming_option = ttk.Combobox(self.input_frame, values=["original", "uuid", "timestamp", "custom"], state="readonly")
+        self.naming_option.grid(row=4, column=1, padx=5, pady=5, sticky="w")
         self.naming_option.set("original")
 
-        tk.Label(root, text="自定义前缀:").grid(row=5, column=0, padx=5, pady=5, sticky="e")
-        self.custom_prefix_entry = tk.Entry(root, width=50)
-        self.custom_prefix_entry.grid(row=5, column=1, padx=5, pady=5)
+        ttk.Label(self.input_frame, text="自定义前缀:").grid(row=5, column=0, padx=5, pady=5, sticky="e")
+        self.custom_prefix_entry = ttk.Entry(self.input_frame, width=50)
+        self.custom_prefix_entry.grid(row=5, column=1, padx=5, pady=5, columnspan=2, sticky="ew")
 
-        tk.Label(root, text="超时时间（秒）:").grid(row=6, column=0, padx=5, pady=5, sticky="e")
-        self.timeout_entry = tk.Entry(root, width=10)
-        self.timeout_entry.grid(row=6, column=1, padx=5, pady=5, sticky="w")
+        # 高级设置框架
+        self.advanced_frame = ttk.LabelFrame(self.main_frame, text="高级设置", padding="10 10 10 10")
+        self.advanced_frame.pack(fill=tk.X, pady=(0, 15))
+
+        ttk.Label(self.advanced_frame, text="超时时间（秒）:").grid(row=0, column=0, padx=5, pady=5, sticky="e")
+        self.timeout_entry = ttk.Entry(self.advanced_frame, width=10)
+        self.timeout_entry.grid(row=0, column=1, padx=5, pady=5, sticky="w")
         self.timeout_entry.insert(0, "15")
 
-        tk.Label(root, text="最大重试次数:").grid(row=7, column=0, padx=5, pady=5, sticky="e")
-        self.retries_entry = tk.Entry(root, width=10)
-        self.retries_entry.grid(row=7, column=1, padx=5, pady=5, sticky="w")
+        ttk.Label(self.advanced_frame, text="最大重试次数:").grid(row=0, column=2, padx=5, pady=5, sticky="e")
+        self.retries_entry = ttk.Entry(self.advanced_frame, width=10)
+        self.retries_entry.grid(row=0, column=3, padx=5, pady=5, sticky="w")
         self.retries_entry.insert(0, "3")
 
-        # 控制按钮
-        self.download_button = tk.Button(root, text="开始下载", command=self.start_download)
-        self.download_button.grid(row=8, column=0, pady=10)
+        # 控制按钮框架
+        self.button_frame = ttk.Frame(self.main_frame)
+        self.button_frame.pack(fill=tk.X, pady=(0, 15))
 
-        self.pause_button = tk.Button(root, text="暂停", command=self.pause_download, state=tk.DISABLED)
-        self.pause_button.grid(row=8, column=1, pady=10)
+        self.download_button = ttk.Button(self.button_frame, text="开始下载", command=self.start_download)
+        self.download_button.pack(side=tk.LEFT, padx=5)
 
-        self.cancel_button = tk.Button(root, text="取消", command=self.cancel_download, state=tk.DISABLED)
-        self.cancel_button.grid(row=8, column=2, pady=10)
+        self.pause_button = ttk.Button(self.button_frame, text="暂停", command=self.pause_download, state=tk.DISABLED)
+        self.pause_button.pack(side=tk.LEFT, padx=5)
 
-        # 日志输出
-        self.log_text = tk.Text(root, height=10, width=70)
-        self.log_text.grid(row=9, column=0, columnspan=3, padx=5, pady=5)
+        self.cancel_button = ttk.Button(self.button_frame, text="取消", command=self.cancel_download, state=tk.DISABLED)
+        self.cancel_button.pack(side=tk.LEFT, padx=5)
+
+        # 日志输出框架
+        self.log_frame = ttk.LabelFrame(self.main_frame, text="下载日志", padding="10 10 10 10")
+        self.log_frame.pack(fill=tk.BOTH, expand=True)
+
+        # 添加日志滚动条
+        self.log_scrollbar = ttk.Scrollbar(self.log_frame)
+        self.log_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+        self.log_text = tk.Text(self.log_frame, height=10, width=70, yscrollcommand=self.log_scrollbar.set, wrap=tk.WORD,
+                               font=(".Microsoft YaHei UI", 9))
+        self.log_text.pack(fill=tk.BOTH, expand=True)
+        self.log_scrollbar.config(command=self.log_text.yview)
         self.log_text.config(state=tk.DISABLED)
 
     def browse_directory(self):
@@ -164,3 +219,8 @@ if __name__ == "__main__":
     root = tk.Tk()
     app = ImageDownloaderApp(root)
     root.mainloop()
+
+    # 配置网格权重，使界面可调整大小
+    self.input_frame.columnconfigure(1, weight=1)
+    self.advanced_frame.columnconfigure(1, weight=1)
+    self.advanced_frame.columnconfigure(3, weight=1)
