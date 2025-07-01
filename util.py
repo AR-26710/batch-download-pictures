@@ -5,7 +5,7 @@ import time
 import random
 import string
 from bs4 import BeautifulSoup
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 
 # 全局变量
 DOWNLOADED_FILES = set()
@@ -61,9 +61,14 @@ def download_images_from_gallery(
 
     if save_dir is None:
         save_dir = "downloaded_images"
-    os.makedirs(save_dir, exist_ok=True)
+    # 解析域名和生成时间戳
+    parsed_url = urlparse(url)
+    domain = parsed_url.netloc if parsed_url.netloc else "unknown_domain"
+    timestamp = time.strftime("%Y-%m-%d-%H%M")
+    new_save_dir = os.path.join(save_dir, domain, timestamp)
+    os.makedirs(new_save_dir, exist_ok=True)
 
-    DOWNLOADED_FILES = load_downloaded_files(save_dir)
+    DOWNLOADED_FILES = load_downloaded_files(new_save_dir)
 
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
@@ -138,7 +143,7 @@ def download_images_from_gallery(
 
             try:
                 img_data = requests.get(img_url, headers=headers, timeout=timeout).content
-                img_path = os.path.join(save_dir, img_name)
+                img_path = os.path.join(new_save_dir, img_name)
 
                 counter = 1
                 while os.path.exists(img_path):
@@ -148,7 +153,7 @@ def download_images_from_gallery(
 
                 with open(img_path, 'wb') as f:
                     f.write(img_data)
-                save_downloaded_file(save_dir, img_name)
+                save_downloaded_file(new_save_dir, img_name)
                 if progress_callback:
                     progress_callback(f"下载成功 ({idx + 1}/{total_images}): {img_path}")
                 break
