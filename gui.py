@@ -91,9 +91,9 @@ class ImageDownloaderApp:
 
     def start_download(self):
         """启动下载任务"""
-        global is_paused, stop_download
-        is_paused = False
-        stop_download = False
+        import util
+        util.is_paused = False
+        util.stop_download = False
 
         url = self.url_entry.get()
         selector_type = self.selector_type.get()
@@ -131,10 +131,9 @@ class ImageDownloaderApp:
 
     def pause_download(self):
         """暂停或继续下载"""
-        global is_paused
-        from util import is_paused
-        is_paused = not is_paused
-        if is_paused:
+        import util
+        util.is_paused = not util.is_paused
+        if util.is_paused:
             self.pause_button.config(text="继续")
             self.log_message("下载已暂停")
         else:
@@ -143,8 +142,8 @@ class ImageDownloaderApp:
 
     def cancel_download(self):
         """取消下载"""
-        global stop_download
-        stop_download = True
+        import util
+        util.stop_download = True
         self.download_button.config(state=tk.NORMAL)
         self.pause_button.config(state=tk.DISABLED, text="暂停")
         self.cancel_button.config(state=tk.DISABLED)
