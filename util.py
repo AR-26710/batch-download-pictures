@@ -54,7 +54,8 @@ def download_images_from_gallery(
         custom_prefix="",
         timeout=10,
         max_retries=3,
-        progress_callback=None
+        progress_callback=None,
+        download_interval=0  # 添加下载间隔参数
 ):
     """下载画廊图片，支持暂停和继续"""
     global is_paused, stop_download, DOWNLOADED_FILES
@@ -156,6 +157,9 @@ def download_images_from_gallery(
                 save_downloaded_file(new_save_dir, img_name)
                 if progress_callback:
                     progress_callback(f"下载成功 ({idx + 1}/{total_images}): {img_path}")
+                # 添加下载间隔
+                if download_interval > 0:
+                    time.sleep(download_interval)
                 break
             except (requests.exceptions.RequestException, KeyboardInterrupt) as e:
                 if isinstance(e, KeyboardInterrupt):

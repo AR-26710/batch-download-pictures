@@ -159,6 +159,12 @@ class ImageDownloaderApp:
         self.retries_entry.grid(row=0, column=3, padx=5, pady=8, sticky="w")
         self.retries_entry.insert(0, "3")
 
+        # 下载间隔（秒）
+        ttk.Label(self.advanced_frame, text="下载间隔（秒）:").grid(row=1, column=0, padx=5, pady=8, sticky="e")
+        self.interval_entry = ttk.Entry(self.advanced_frame, width=10)
+        self.interval_entry.grid(row=1, column=1, padx=5, pady=8, sticky="w")
+        self.interval_entry.insert(0, "0")
+
     def create_control_buttons(self):
         """创建控制按钮框架"""
         self.button_frame = ttk.Frame(self.main_frame)
@@ -237,8 +243,9 @@ class ImageDownloaderApp:
         try:
             timeout = int(self.timeout_entry.get())
             max_retries = int(self.retries_entry.get())
+            download_interval = float(self.interval_entry.get())
         except ValueError:
-            messagebox.showerror("错误", "超时时间和重试次数必须为整数！")
+            messagebox.showerror("错误", "超时时间、重试次数和下载间隔必须为数字！")
             return
 
         if not url or not selector_value:
@@ -253,7 +260,7 @@ class ImageDownloaderApp:
         # 启动下载线程
         self.download_thread = threading.Thread(
             target=download_images_from_gallery,
-            args=(url, selector_value, selector_type, save_dir, naming_option, custom_prefix, timeout, max_retries, self.log_message),
+            args=(url, selector_value, selector_type, save_dir, naming_option, custom_prefix, timeout, max_retries, self.log_message, download_interval),
             daemon=True
         )
         self.download_thread.start()
